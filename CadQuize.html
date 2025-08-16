@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CADクイズマスター</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .app-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .app-subtitle {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            min-height: 500px;
+        }
+
+        /* カテゴリ選択画面 */
+        .category-section {
+            display: block;
+        }
+
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .category-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .category-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .category-icon svg {
+            width: 30px;
+            height: 30px;
+            stroke: white;
+            fill: none;
+            stroke-width: 2;
+        }
+
+        .category-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .category-count {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* クイズ画面 */
+        .quiz-section {
+            display: none;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .quiz-progress {
+            font-size: 1.1rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .quiz-score {
+            font-size: 1.1rem;
+            color: #764ba2;
+            font-weight: 600;
+        }
+
+        .question-container {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 25px;
+            line-height: 1.8;
+        }
+
+        .choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .choice-button {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 18px 25px;
+            text-align: left;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #333;
+        }
+
+        .choice-button:hover:not(.correct):not(.incorrect):not(.disabled) {
+            background: #e8eaf6;
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .choice-button.correct {
+            background: #e8f5e9;
+            border-color: #4caf50;
+            color: #2e7d32;
+        }
+
+        .choice-button.incorrect {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #c62828;
+        }
+
+        .choice-button.disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .feedback-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1rem;
+            display: none;
+        }
+
+        .feedback-message.correct {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #4caf50;
+        }
+
+        .feedback-message.incorrect {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ff9800;
+        }
+
+        .next-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 40px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .next-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        /* 結果画面 */
+        .result-section {
+            display: none;
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .result-score {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 20px 0;
+        }
+
+        .result-message {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .result-details {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .result-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-stat:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #666;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-button {
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .retry-button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .back-button {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* レスポンシブ対応 */
+        @media (max-width: 600px) {
+            .app-title {
+                font-size: 2rem;
+            }
+
+            .category-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .question-text {
+                font-size: 1.1rem;
+            }
+
+            .choice-button {
+                font-size: 1rem;
+                padding: 15px 20px;
+            }
+        }
+
+        /* ローディング */
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #666;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="app-title">CADクイズマスター</h1>
+            <p class="app-subtitle">スキルレベルに合わせてCADの知識を深めよう</p>
+        </div>
+
+        <div class="main-content">
+            <div id="categorySection" class="category-section">
+                <h2 style="color: #333; margin-bottom: 10px;">カテゴリを選択</h2>
+                <p style="color: #666; margin-bottom: 20px;">あなたのレベルに合ったクイズに挑戦しましょう</p>
+                <div id="categoryGrid" class="category-grid">
+                    </div>
+            </div>
+
+            <div id="quizSection" class="quiz-section">
+                <div class="quiz-header">
+                    <div class="quiz-progress">
+                        問題 <span id="currentQuestion">1</span> / <span id="totalQuestions">10</span>
+                    </div>
+                    <div class="quiz-score">
+                        スコア: <span id="currentScore">0</span>
+                    </div>
+                </div>
+                <div class="question-container">
+                    <div id="questionText" class="question-text"></div>
+                    <div id="choicesContainer" class="choices-container"></div>
+                    <div id="feedbackMessage" class="feedback-message"></div>
+                    <button id="nextButton" class="next-button" onclick="nextQuestion()">次の問題へ</button>
+                </div>
+            </div>
+
+            <div id="resultSection" class="result-section">
+                <h2 class="result-title">クイズ完了！</h2>
+                <div class="result-score" id="finalScore"></div>
+                <p class="result-message" id="resultMessage"></p>
+                <div class="result-details">
+                    <div class="result-stat">
+                        <span class="stat-label">カテゴリ</span>
+                        <span class="stat-value" id="resultCategory"></span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="stat-label">正解数</span>
+                        <span class="stat-value" id="resultCorrect"></span>
+                    </div>
+                    <div class="result-stat">
+                        <span class="stat-label">正答率</span>
+                        <span class="stat-value" id="resultAccuracy"></span>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-button retry-button" onclick="retryQuiz()">もう一度挑戦</button>
+                    <button class="action-button back-button" onclick="backToCategories()">カテゴリ選択へ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // グローバル変数
+        let quizData = [];
+        let currentCategory = null;
+        let currentQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredQuestions = [];
+
+        // アイコンSVG
+        const categoryIcons = {
+            '初級': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 2l9 4v9a5 5 0 0 1 -5 5h-4a5 5 0 0 1 -5 -5v-9z" /></svg>',
+            '中級': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 15m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" /></svg>',
+            '上級': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" /></svg>',
+            'エキスパート': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M19.5 13.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" /><path d="M12 6l-2 4l-4 2l4 2l2 4l2 -4l4 -2l-4 -2z" /></svg>',
+            'システム変数編': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" /><path d="M9 12a3 3 0 1 0 6 0a3 3 0 0 0 -6 0" /></svg>',
+            'ショートカット編': '<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M7 17l0 -10" /><path d="M17 7l0 10" /><path d="M8 17l8 0" /><path d="M8 7l8 0" /><path d="M14 17l0 -2" /><path d="M10 7l0 2" /><path d="M10 17l0 -2" /><path d="M14 7l0 2" /></svg>'
+        };
+
+        // 初期化処理
+        function initializeApp() {
+            // CSVファイルから読み込んだデータを直接設定
+            quizData = [
+                {
+                    "name": "初級",
+                    "questions": [
+                        {
+                            "question": "オブジェクトを複数の基準点に位置合わせするコマンドは？",
+                            "choices": [ "COINCIDE", "ALIGN", "ADJUST", "CONFORM" ],
+                            "correctAnswer": "ALIGN"
+                        },
+                        { "question": "円弧を作成するコマンドは？", "choices": [ "SECTOR", "ARC", "SEGMENT", "CURVATURE" ], "correctAnswer": "ARC" },
+                        { "question": "オブジェクトを等間隔で複製するコマンドは？", "choices": [ "COPYARRAY", "ARRAY", "REPLICATE", "PATTERN" ], "correctAnswer": "ARRAY" },
+                        { "question": "複数のオブジェクトをブロック化するコマンドは？", "choices": [ "GROUP", "BLOCK", "ASSEMBLE", "COMPOSE" ], "correctAnswer": "BLOCK" },
+                        { "question": "オブジェクトを分割・切断するコマンドは？", "choices": [ "SLICE", "BREAK", "DIVIDE", "SEVER" ], "correctAnswer": "BREAK" },
+                        { "question": "交差するエッジを面取りするコマンドは？", "choices": [ "FILLET", "CHAMFER", "BEVEL", "TRUNCATE" ], "correctAnswer": "CHAMFER" },
+                        { "question": "円を作成するコマンドは？", "choices": [ "ARC", "CIRCLE", "ELLIPSE", "ROUND" ], "correctAnswer": "CIRCLE" },
+                        { "question": "水平・垂直の長さ寸法を記入するコマンドは？", "choices": [ "DIMORTHO", "DIMLINEAR", "DIMEDIT", "DIMALIGNED" ], "correctAnswer": "DIMLINEAR" },
+                        { "question": "斜めの平行寸法を記入するコマンドは？", "choices": [ "DIMSLANTED", "DIMLINEAR", "DIMALIGNED", "DIMANGLE" ], "correctAnswer": "DIMALIGNED" },
+                        { "question": "オブジェクトを削除するコマンドは？", "choices": [ "DEL", "ERASE", "REMOVE", "CLEAR" ], "correctAnswer": "ERASE" },
+                        { "question": "ブロックを分解するコマンドは？", "choices": [ "UNGROUP", "EXPLODE", "DISASSEMBLE", "DECOMPOSE" ], "correctAnswer": "EXPLODE" },
+                        { "question": "オブジェクトを他のオブジェクトとぶつかる位置まで延長するコマンドは？", "choices": [ "LENGTHEN", "EXTEND", "PROLONG", "STRETCH" ], "correctAnswer": "EXTEND" },
+                        { "question": "角を丸くしたり包絡処理をするコマンドは？", "choices": [ "CHAMFER", "FILLET", "RADIUS", "ROUNDING" ], "correctAnswer": "FILLET" },
+                        { "question": "図面内の特定の文字を検索するコマンドは？", "choices": [ "LOOKUP", "FIND", "QUERY", "SEARCH" ], "correctAnswer": "FIND" },
+                        { "question": "オブジェクトをグループ化するコマンドは？", "choices": [ "JOIN", "GROUP", "COMBINE", "ASSEMBLE" ], "correctAnswer": "GROUP" },
+                        { "question": "ハッチングや塗りつぶしを作成するコマンドは？", "choices": [ "FILL", "HATCH", "SHADE", "PATTERN" ], "correctAnswer": "HATCH" },
+                        { "question": "複数の線を統合するコマンドは？", "choices": [ "MERGE", "JOIN", "UNITE", "CONNECT" ], "correctAnswer": "JOIN" },
+                        { "question": "画層を管理するコマンドは？", "choices": [ "LAYMENU", "LAYER", "LAYISO", "LAYERSET" ], "correctAnswer": "LAYER" },
+                        { "question": "オブジェクトを反転するコマンドは？", "choices": [ "FLIP", "MIRROR", "INVERT", "ROTATE" ], "correctAnswer": "MIRROR" },
+                        { "question": "複数行のテキストを記入するコマンドは？", "choices": [ "TEXT", "MTEXT", "TXTBOX", "ANNOTEXT" ], "correctAnswer": "MTEXT" },
+                        { "question": "オブジェクトを一定距離で複製するコマンドは？", "choices": [ "ARRAYSET", "OFFSET", "TRANSLATE", "MOVE" ], "correctAnswer": "OFFSET" },
+                        { "question": "プロパティでオブジェクトを検索し選択するコマンドは？", "choices": [ "SELECT", "QSELECT", "QUICK", "PROPERTYFIND" ], "correctAnswer": "QSELECT" }
+                    ]
+                },
+                {
+                    "name": "中級",
+                    "questions": [
+                        { "question": "指定した領域の面積を計測するコマンドは？", "choices": [ "DIST", "AREA", "AREACALC", "DIVIDE" ], "correctAnswer": "AREA" },
+                        { "question": "図面のエラーをチェックし修正するコマンドは？", "choices": [ "AUDIT", "PURGE", "INSPECT", "VERIFY" ], "correctAnswer": "AUDIT" },
+                        { "question": "オブジェクトに中心線を追加するコマンドは？", "choices": [ "CENTERLINE", "XLINE", "LEADER", "DIMCONTINUE" ], "correctAnswer": "CENTERLINE" },
+                        { "question": "2つの図面を比較し差分を表示するコマンドは？", "choices": [ "COMPARE", "CONTRAST", "SIMILAR", "MATCHUP" ], "correctAnswer": "COMPARE" },
+                        { "question": "長さ寸法を連続記入するコマンドは？", "choices": [ "DIMCONTINUE", "DIMLINEAR", "DIMARRAY", "DIMALIGNED" ], "correctAnswer": "DIMCONTINUE" },
+                        { "question": "円や円弧の半径寸法を記入するコマンドは？", "choices": [ "DIMRADIUS", "DIMANGLE", "DIMLINEAR", "DIMCIRC" ], "correctAnswer": "DIMRADIUS" },
+                        { "question": "寸法間の間隔を均等に調整するコマンドは？", "choices": [ "DIMSPACE", "DIMGAP", "DIMALIGN", "DIMOFFSET" ], "correctAnswer": "DIMSPACE" },
+                        { "question": "2点間の距離を測定するコマンドは？", "choices": [ "DIST", "LENGTHEN", "MEASURE", "DIVIDE" ], "correctAnswer": "DIST" },
+                        { "question": "オブジェクトを指定した数で等分割するコマンドは？", "choices": [ "DIVIDE", "ARRAY", "SEGMENT", "OVERKILL" ], "correctAnswer": "DIVIDE" },
+                        { "question": "ハッチングを背面に移動するコマンドは？", "choices": [ "HATCHTOBACK", "HATCHFRONT", "LAYERWALK", "TEXTTOFRONT" ], "correctAnswer": "HATCHTOBACK" },
+                        { "question": "画層の状態を直前の状態に戻すコマンドは？", "choices": [ "LAYERP", "LAYISO", "LAYERUNDO", "LAYMRG" ], "correctAnswer": "LAYERP" },
+                        { "question": "指定した画層を強制削除するコマンドは？", "choices": [ "LAYDEL", "LAYERDEL", "CLEANUP", "LAYREMOVE" ], "correctAnswer": "LAYDEL" },
+                        { "question": "特定の画層以外を非表示あるいはロックするコマンドは？", "choices": [ "LAYISO", "LAYLOCKOUT", "LAYVISOFF", "LAYFILTER" ], "correctAnswer": "LAYISO" },
+                        { "question": "複数の画層を統合するコマンドは？", "choices": [ "LAYMRG", "LAYMERGE", "LAYERP", "LAYUNIFY" ], "correctAnswer": "LAYMRG" },
+                        { "question": "画層一覧から、選択した画層上のオブジェクトのみを表示するコマンドは？", "choices": [ "LAYWALK", "LAYLIST", "LAYERVIEW", "LAYBROWSER" ], "correctAnswer": "LAYWALK" },
+                        { "question": "オブジェクトの長さを変更するコマンドは？", "choices": [ "LENGTHEN", "LENGTHMOD", "SCALELENGTH", "EXTENDL" ], "correctAnswer": "LENGTHEN" },
+                        { "question": "矢印付き注釈を作成するコマンドは？", "choices": [ "MLEADER", "LEADER", "MULTILEAD", "ARROWANNOTATE" ], "correctAnswer": "MLEADER" },
+                        { "question": "重複オブジェクトを削除するコマンドは？", "choices": [ "OVERKILL", "DUPREMOVER", "PURGE", "CLEANUP" ], "correctAnswer": "OVERKILL" },
+                        { "question": "指定した辺数の多角形を作成するコマンドは？", "choices": [ "POLYGON", "REGULAR", "MULTISIDE", "FIGURE" ], "correctAnswer": "POLYGON" },
+                        { "question": "複数の図面をまとめて印刷するコマンドは？", "choices": [ "PUBLISH", "PRINTSET", "BATCHPRINT", "PRINTALL" ], "correctAnswer": "PUBLISH" },
+                        { "question": "未使用のブロック定義や画層などの項目を図面から除去し軽量化するコマンドは？", "choices": [ "PURGE", "CLEANUP", "REMOVE", "ERASE" ], "correctAnswer": "PURGE" },
+                        { "question": "指定した点から無限に延びる放射線を作成するコマンドは？", "choices": [ "RAY", "XLINE", "RADIATE", "LINE" ], "correctAnswer": "RAY" },
+                        { "question": "破損した図面を修復するコマンドは？", "choices": [ "RECOVER", "REPAIR", "RESTORE", "FIXDWG" ], "correctAnswer": "RECOVER" },
+                        { "question": "ブロックや画層の名前などを変更するコマンドは？", "choices": [ "RENAME", "MODIFY", "EDITNAME", "CHANGENAME" ], "correctAnswer": "RENAME" }
+                    ]
+                },
+                {
+                    "name": "上級",
+                    "questions": [
+                        { "question": "オブジェクトを指定したパスに沿って配列複写するコマンドは？", "choices": [ "ARRAY", "ARRAYPATH", "PATHEXTEND", "DUPLICATEPATH" ], "correctAnswer": "ARRAYPATH" },
+                        { "question": "閉じた領域の境界線を作成するコマンドは？", "choices": [ "REGION", "BOUNDARY", "ENCLOSE", "POLYGON" ], "correctAnswer": "BOUNDARY" },
+                        { "question": "オブジェクトをモデル空間とレイアウト空間間で移動するコマンドは？", "choices": [ "WBLOCK", "CHSPACE", "LAYOUTSWAP", "SPACECONVERT" ], "correctAnswer": "CHSPACE" },
+                        { "question": "寸法の自動調整を解除するコマンドは？", "choices": [ "DIMROTATEOFF", "DIMDISASSOCIATE", "DIMEDIT", "DIMBREAK" ], "correctAnswer": "DIMDISASSOCIATE" },
+                        { "question": "複数の寸法の寸法値を回転・修正または元の位置に戻すコマンドは？", "choices": [ "DIMADJUST", "DIMCONTINUE", "DIMEDIT", "DIMRECOVER" ], "correctAnswer": "DIMEDIT" },
+                        { "question": "回転した長さ寸法を作成するコマンドは？", "choices": [ "DIMANGULAR", "DIMRADIUS", "DIMROTATED", "DIMLENGTHROT" ], "correctAnswer": "DIMROTATED" },
+                        { "question": "寸法テキストの文字位置を調整するコマンドは？", "choices": [ "DIMTEXTALIGN", "DIMTEDIT", "DIMTEXTTUNE", "DIMPOSITION" ], "correctAnswer": "DIMTEDIT" },
+                        { "question": "複数のDWGのバージョンを一括で変更できるコマンドは？", "choices": [ "VERSIONSWAP", "DWGCONVERT", "FILECONVERT", "DWGVERSION" ], "correctAnswer": "DWGCONVERT" },
+                        { "question": "図面を関連ファイルとまとめパッケージとして送信できるコマンドは？", "choices": [ "FILEPACK", "ETRANSMIT", "PACKAGE", "BUNDLE" ], "correctAnswer": "ETRANSMIT" },
+                        { "question": "指定したレイアウトを個別のDWGとして出力するコマンドは？", "choices": [ "EXPORTLAYOUT", "CHSPACE", "PAPEREXPORT", "WBLOCK" ], "correctAnswer": "EXPORTLAYOUT" },
+                        { "question": "自動更新するフィールドを挿入するコマンドは？", "choices": [ "FIELD", "AUTOUPDATE", "INSERTFIELD", "DATALINK" ], "correctAnswer": "FIELD" },
+                        { "question": "オブジェクトにURL等のリンクを設定するコマンドは？", "choices": [ "HYPERLINK", "LINKSETUP", "WEBLINK", "URLASSIGN" ], "correctAnswer": "HYPERLINK" },
+                        { "question": "指定したポイントの座標を取得するコマンドは？", "choices": [ "GETCOORD", "POINTVIEW", "ID", "COORDINS" ], "correctAnswer": "ID" },
+                        { "question": "選択したオブジェクト以外を非表示にするコマンドは？", "choices": [ "ISOLATEOBJECTS", "HIDEOTHERS", "FREEZE", "LAYEROFF" ], "correctAnswer": "ISOLATEOBJECTS" },
+                        { "question": "文字の位置を変えずに基点だけ変更するコマンドは？", "choices": [ "TEXTBASESHIFT", "JUSTIFYTEXT", "TEXTALIGN", "TEXTORIGIN" ], "correctAnswer": "JUSTIFYTEXT" },
+                        { "question": "ビューポートを作成・管理するコマンドは？", "choices": [ "MVIEW", "VIEWPORT", "VPCLIP", "VPORTCTRL" ], "correctAnswer": "MVIEW" },
+                        { "question": "直前に削除したオブジェクトを復活するコマンドは？", "choices": [ "OOPS", "UNDO", "RECOVER", "REINSERT" ], "correctAnswer": "OOPS" },
+                        { "question": "引き出し線を作成するコマンドは？", "choices": [ "QLEADER", "LEADER", "BLEADER", "ANNOTATELEAD" ], "correctAnswer": "QLEADER" },
+                        { "question": "複数の図面を一括で修復するコマンドは？", "choices": [ "RECOVERALL", "RECOVER", "AUDIT", "REPAIRALL" ], "correctAnswer": "RECOVERALL" },
+                        { "question": "色従属印刷スタイル(CTB)を名前付き印刷スタイル(STB)に変換するコマンドは？", "choices": [ "CONVERTCTB", "PLOTSTYLECONVERT", "CTB2STB", "STBCONVERT" ], "correctAnswer": "CONVERTCTB" },
+                        { "question": "オブジェクトの始点と終点を反転するコマンドは？", "choices": [ "REVERSE", "ROTATE", "REBIRTH", "FLIPENDS" ], "correctAnswer": "REVERSE" },
+                        { "question": "リボンを表示するコマンドは？", "choices": [ "RIBBON", "TOOLPALETTE", "WORKSPACE", "UISET" ], "correctAnswer": "RIBBON" },
+                        { "question": "文字オブジェクトの尺度を調整するコマンドは？", "choices": [ "SCALETEXT", "TEXTSCALE", "SIZETEXT", "TEXTADJUST" ], "correctAnswer": "SCALETEXT" }
+                    ]
+                },
+                {
+                    "name": "エキスパート",
+                    "questions": [
+                        { "question": "次のうち実際にあるコマンドは？", "choices": [ "CLASICCOPY", "ARRAYCLASIC", "CLASSICMATCH", "LAYERCLASSIC" ], "correctAnswer": "ARRAYCLASIC" },
+                        { "question": "破断線を作図するコマンドは？", "choices": [ "HADAN", "BREAKLINE", "CUTLINE", "DIVIDELINE" ], "correctAnswer": "BREAKLINE" },
+                        { "question": "属性を保持したままブロックを分解するコマンドは？", "choices": [ "EXPLODE", "BURST", "UNGROUP", "ATEXPRODE" ], "correctAnswer": "BURST" },
+                        { "question": "コマンドライン上で数式計算を実行するコマンドは？", "choices": [ "NUMBER", "CAL", "ANALYZE", "SCRIPT" ], "correctAnswer": "CAL" },
+                        { "question": "オブジェクトのプロパティや位置を変更するコマンドは？", "choices": [ "CHPROP", "CHANGE", "MODIFY", "SELECT" ], "correctAnswer": "CHANGE" },
+                        { "question": "オブジェクトのプロパティを編集するコマンドは？", "choices": [ "PROPCHANGE", "MODIFY", "CHPROP", "SELECT" ], "correctAnswer": "CHPROP" },
+                        { "question": "次のうち実際にあるコマンドは？", "choices": [ "LAYERCLASSIC", "CLASICLAYER", "CLASSICLAY", "LAYCLASS" ], "correctAnswer": "CLASICLAYER" },
+                        { "question": "次のうち実際にあるコマンドは？", "choices": [ "REFCLASSIC", "CLASICXREF", "CLASSICATTACH", "CLASSICREF" ], "correctAnswer": "CLASICXREF" },
+                        { "question": "選択した寸法のプロパティを変更するコマンドは？", "choices": [ "DIMEDIT", "DIMOVERRIDE", "DIMTEDIT", "DIMREGEN" ], "correctAnswer": "DIMOVERRIDE" },
+                        { "question": "寸法オブジェクトを再描画するコマンドは？", "choices": [ "REGEND", "REGENALLDIM", "REGENDIM", "DIMREGEN" ], "correctAnswer": "DIMREGEN" },
+                        { "question": "複数条件でオブジェクトをフィルタリングして選択するコマンドは？", "choices": [ "SELECTION", "FILT", "FILTER", "FIND" ], "correctAnswer": "FILTER" },
+                        { "question": "3Dオブジェクトを2D平面化するEXPRESSツールズのコマンドは？", "choices": [ "REDUCE", "FLATTEN", "PLANARIZE", "FS" ], "correctAnswer": "FLATTEN" },
+                        { "question": "クイック選択でオブジェクトを選択するコマンドは？", "choices": [ "FS", "SELECT", "QSELECT", "FILTER" ], "correctAnswer": "QSELECT" },
+                        { "question": "選択したハッチングの境界線を生成するコマンドは？", "choices": [ "HATCHBOUNDARY", "BOUNDARY", "HATCHGENERATEBOUNDARY", "HBOUNDARY" ], "correctAnswer": "HATCHGENERATEBOUNDARY" },
+                        { "question": "複数のレイアウトを統合するEXPRESSツールズのコマンドは？", "choices": [ "PUBLISH", "EXPORTLAYOUT", "WBLOCK", "LAYOUTMERGE" ], "correctAnswer": "LAYOUTMERGE" },
+                        { "question": "選択オブジェクトの詳細情報を表示するコマンドは？", "choices": [ "LIST", "INFO", "DATA", "PROPERTIES" ], "correctAnswer": "LIST" },
+                        { "question": "外部参照やブロック内のオブジェクトをコピーするコマンドは？", "choices": [ "COPY", "EXCOPY", "NCOPY", "ARRAY" ], "correctAnswer": "NCOPY" },
+                        { "question": "コマンドラインから移動距離を入力し画面移動できるコマンドは？", "choices": [ "PAN", "-PAN", "PANPLUS", "PANMOVE" ], "correctAnswer": "-PAN" },
+                        { "question": "ユーザ名、現在の日付と時刻、図面名などを含むブロックを挿入するコマンドは？", "choices": [ "DWGFIELD", "REVDATE", "DATENAME", "TIMESTAMP" ], "correctAnswer": "REVDATE" },
+                        { "question": "スクリプトを実行するコマンドは？", "choices": [ "SCRIPT", "SCRIPTRUN", "EXECUTE", "LOAD" ], "correctAnswer": "SCRIPT" },
+                        { "question": "尺度リストを編集するコマンドは？", "choices": [ "SCALE", "SCALETEXT", "SCALELISTEDIT", "SCALELIST" ], "correctAnswer": "SCALELISTEDIT" },
+                        { "question": "オブジェクト選択を行うコマンドは？", "choices": [ "SELECTION", "FILTER", "SELECT", "PSELECT" ], "correctAnswer": "SELECT" },
+                        { "question": "フリーハンドで線を描画するコマンドは？", "choices": [ "DRAW", "SKETCH", "PENCIL", "LINEPLUS" ], "correctAnswer": "SKETCH" },
+                        { "question": "テキストの大文字・小文字を変換するEXPRESSツールズのコマンドは？", "choices": [ "TCASE", "TEXTCASE", "CHANGECASE", "CASE" ], "correctAnswer": "TCASE" },
+                        { "question": "円形に文字を配置するEXPRESSツールズのコマンドは？", "choices": [ "TCIRCLE", "CIRCLETEST", "ARCTEXT", "TEXTCIRCLE" ], "correctAnswer": "ARCTEXT" }
+                    ]
+                },
+                {
+                    "name": "システム変数編",
+                    "questions": [
+                        { "question": "PDF出力時に、SHXフォントの文字をコメントとして保存するか、ジオメトリ保存するか等を設定するシステム変数は？", "choices": [ "PDFTEXTCTRL", "SHXFONTSEL", "PDFCONVERTMODE", "PDFSHX" ], "correctAnswer": "PDFSHX" },
+                        { "question": "レイアウト空間が重い時に調整するとパフォーマンスを向上できるシステム変数は？", "choices": [ "LAYOUTREFRESH", "TABREGENMODE", "LAYOUTUPDATECTL", "LAYOUTREGENCTL" ], "correctAnswer": "LAYOUTREGENCTL" },
+                        { "question": "ハッチングに線種設定を反映するかどうかを設定するシステム変数は？", "choices": [ "HATCHLINETYPE", "HPSTYLEMODE", "HATCHPATTERNCTRL", "HPLINETYPE" ], "correctAnswer": "HPLINETYPE" },
+                        { "question": "図面単位（フィート‐インチ／メートル）の設定を管理するシステム変数は？", "choices": [ "UNITCONTROL", "DIMENSIONUNIT", "UNITSETTINGS", "MEASUREMENT" ], "correctAnswer": "MEASUREMENT" },
+                        { "question": "寸法オブジェクトの自動調整および、寸法を分解するかどうか等をコントロールするシステム変数は？", "choices": [ "DIMAUTOMODE", "DIMADJUST", "DIMRECALCCTRL", "DIMASSOC" ], "correctAnswer": "DIMASSOC" },
+                        { "question": "新規作成されるハッチングの既定画層を指定するシステム変数は？", "choices": [ "DEFAULTHATCHLAYER", "HATCHASSIGN", "HATCHLAYER", "HPLAYER" ], "correctAnswer": "HPLAYER" },
+                        { "question": "新しい寸法の既定の画層を指定するシステム変数は？", "choices": [ "ANNOTATIONLAYER", "DIMDISPLAYLAYER", "LAYERDIMCTRL", "DIMLAYER" ], "correctAnswer": "DIMLAYER" },
+                        { "question": "文字省略モードのオン・オフを切り替えるシステム変数は？", "choices": [ "TEXTDISPLAYMODE", "QTEXTFORMAT", "QUICKTEXTCTRL", "QTEXTMODE" ], "correctAnswer": "QTEXTMODE" },
+                        { "question": "すべてのイメージ、クリップされている外部参照、ワイプアウト等のフレーム表示を切り替えるシステム変数は？", "choices": [ "FRAMEVISIBILITY", "DISPLAYFRAME", "SHOWIMAGEFRAME", "IMAGEFRAME" ], "correctAnswer": "IMAGEFRAME" },
+                        { "question": "図面を開いたときに表示されるスタートアップダイアログボックスまたはスタートアップウィザードの表示をコントロールするシステム変数は？", "choices": [ "BEGINNING", "OPENMODE", "STARTDIALOG", "STARTUP" ], "correctAnswer": "STARTUP" },
+                        { "question": "ビューポートが回転されたときに、ビューポート内のビューも一緒に回転させるかどうかを管理するシステム変数は？", "choices": [ "VIEWROTATIONLINK", "ROTATEVIEWSYNC", "VPORTROTATECTRL", "VPROTATEASSOC" ], "correctAnswer": "VPROTATEASSOC" },
+                        { "question": "ファイル選択ダイアログボックスの表示/非表示をコントロールシステム変数は？", "choices": [ "FILEGUIDE", "DWGIDCONTROL", "FILEIDENTIFIER", "FILEDIA" ], "correctAnswer": "FILEDIA" },
+                        { "question": "図面範囲・グリッド範囲外にオブジェクトを作成できるかどうかをコントロールするシステム変数は？", "choices": [ "LIMITVERIFY", "CHECKLIMITS", "RESTRICTCHECK", "LIMCHECK" ], "correctAnswer": "LIMCHECK" },
+                        { "question": "図面全体の線種尺度(グローバル線種尺度)を設定するシステム変数は？", "choices": [ "GLOBALLINETYPESCALE", "LINETYPEGLOBAL", "SCALELINECTL", "LTSCALE" ], "correctAnswer": "LTSCALE" },
+                        { "question": "ペーパー空間のビューポートに表示されるオブジェクトの線種尺度をコントロールするシステム変数は？", "choices": [ "PAPERLINETYPESCALE", "VIEWPORTLINETYPE", "PSLINETYPESCALE", "PSLTSCALE" ], "correctAnswer": "PSLTSCALE" },
+                        { "question": "現在のオブジェクトの線種尺度を設定するシステム変数は？", "choices": [ "BLOCKLINETYPESCALE", "CELLTYPESCALING", "BLOCKSCL", "CELTSCALE" ], "correctAnswer": "CELTSCALE" },
+                        { "question": "グループ選択と自動調整ハッチング選択をコントロールするシステム変数は？", "choices": [ "SELECTIONSTYLE", "OBJECTPICKMODE", "STYLEPICKCTRL", "PICKSTYLE" ], "correctAnswer": "PICKSTYLE" },
+                        { "question": "画面外のオブジェクトを選択の対象とするかどうかを管理するシステム変数は？", "choices": [ "OFFSCREENPICKING", "OUTOFSCREENSELECT", "NONVISIBLESELECTION", "SELECTIONOFFSCREEN" ], "correctAnswer": "SELECTIONOFFSCREEN" }
+                    ]
+                },
+                {
+                    "name": "ショートカット編",
+                    "questions": [
+                        { "question": "図面を開くショートカットキーは？", "choices": [ "Ctrl+O", "Ctrl+D", "Ctrl+H", "Ctrl+F" ], "correctAnswer": "Ctrl+O" },
+                        { "question": "グループ選択のオン・オフを切り替えるショートカットキーは？", "choices": [ "Ctrl+H", "Ctrl+Shift+H", "Ctrl+I", "Ctrl+J" ], "correctAnswer": "Ctrl+H" },
+                        { "question": "ヘルプを表示するショートカットキーは？", "choices": [ "F1", "F2", "F3", "F4" ], "correctAnswer": "F1" },
+                        { "question": "テキストウィンドウのオン・オフを切り替えるショートカットキーは？", "choices": [ "F2", "F1", "F3", "F4" ], "correctAnswer": "F2" },
+                        { "question": "オブジェクトスナップモードのオン・オフを切り替えるショートカットキーは？", "choices": [ "F3", "F2", "F4", "F5" ], "correctAnswer": "F3" },
+                        { "question": "グリッドモードのオン・オフを切り替えるショートカットキーは？", "choices": [ "F7", "F8", "F9", "F10" ], "correctAnswer": "F7" },
+                        { "question": "直交モードのオン・オフを切り替えるショートカットキーは？", "choices": [ "F8", "F7", "F9", "F10" ], "correctAnswer": "F8" },
+                        { "question": "スナップモードのオン・オフを切り替えるショートカットキーは？", "choices": [ "F9", "F8", "F10", "F11" ], "correctAnswer": "F9" },
+                        { "question": "オブジェクトスナップトラッキングのオン・オフを切り替えるショートカットキーは？", "choices": [ "F11", "F10", "F12", "F1" ], "correctAnswer": "F11" },
+                        { "question": "ダイナミック入力モードのオン・オフを切り替えるショートカットキーは？", "choices": [ "F12", "F11", "F10", "F9" ], "correctAnswer": "F12" },
+                        { "question": "フルスクリーン表示のオン・オフを行うショートカットキーは？", "choices": [ "Ctrl+0", "Ctrl+1", "Ctrl+2", "Ctrl+3" ], "correctAnswer": "Ctrl+0" },
+                        { "question": "プロパティパレットのオン・オフを表示するショートカットキーは？", "choices": [ "Ctrl+1", "Ctrl+2", "Ctrl+3", "Ctrl+4" ], "correctAnswer": "Ctrl+1" },
+                        { "question": "Design Centerパレットを表示するショートカットキーは？", "choices": [ "Ctrl+2", "Ctrl+1", "Ctrl+3", "Ctrl+4" ], "correctAnswer": "Ctrl+2" },
+                        { "question": "ツールパレットを表示するショートカットキーは？", "choices": [ "Ctrl+3", "Ctrl+2", "Ctrl+4", "Ctrl+5" ], "correctAnswer": "Ctrl+3" },
+                        { "question": "クイック計算を表示するショートカットキーは？", "choices": [ "Ctrl+8", "Ctrl+7", "Ctrl+9", "Ctrl+0" ], "correctAnswer": "Ctrl+8" },
+                        { "question": "コマンドラインのオン・オフを切り替えるショートカットキーは？", "choices": [ "Ctrl+9", "Ctrl+8", "Ctrl+0", "Ctrl+1" ], "correctAnswer": "Ctrl+9" },
+                        { "question": "オブジェクトを切り取るショートカットキーは？", "choices": [ "Ctrl+X", "Ctrl+C", "Ctrl+V", "Ctrl+Shift+V" ], "correctAnswer": "Ctrl+X" },
+                        { "question": "基点コピーのショートカットキーは？", "choices": [ "Ctrl+Shift+C", "Ctrl+Shift+V", "Ctrl+C", "Ctrl+X" ], "correctAnswer": "Ctrl+Shift+C" },
+                        { "question": "クリップボードの内容をブロックとして貼り付けるショートカットキーは？", "choices": [ "Ctrl+Shift+V", "Ctrl+Shift+C", "Ctrl+V", "Ctrl+X" ], "correctAnswer": "Ctrl+Shift+V" }
+                    ]
+                }
+            ];
+            
+            // カテゴリを表示
+            displayCategories();
+        }
+
+        // カテゴリを表示
+        function displayCategories() {
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = '';
+
+            quizData.forEach(category => {
+                const card = document.createElement('div');
+                card.className = 'category-card';
+                card.onclick = () => startQuiz(category);
+                
+                card.innerHTML = `
+                    <div class="category-icon">
+                        ${categoryIcons[category.name] || categoryIcons['初級']}
+                    </div>
+                    <div class="category-name">${category.name}</div>
+                    <div class="category-count">${category.questions.length}問</div>
+                `;
+                
+                grid.appendChild(card);
+            });
+        }
+
+        // クイズを開始
+        function startQuiz(category) {
+            currentCategory = category;
+            currentQuestions = [...category.questions].sort(() => Math.random() - 0.5).slice(0, 10);
+            currentQuestionIndex = 0;
+            score = 0;
+            answeredQuestions = [];
+
+            document.getElementById('categorySection').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+            document.getElementById('resultSection').style.display = 'none';
+            
+            document.getElementById('totalQuestions').textContent = currentQuestions.length;
+            document.getElementById('currentScore').textContent = score;
+            
+            displayQuestion();
+        }
+
+        // 問題を表示
+        function displayQuestion() {
+            const question = currentQuestions[currentQuestionIndex];
+            document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+            document.getElementById('questionText').textContent = question.question;
+            
+            const choicesContainer = document.getElementById('choicesContainer');
+            choicesContainer.innerHTML = '';
+            
+            const shuffledChoices = [...question.choices].sort(() => Math.random() - 0.5);
+
+            shuffledChoices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-button';
+                button.textContent = choice;
+                button.onclick = () => selectAnswer(choice, button);
+                choicesContainer.appendChild(button);
+            });
+            
+            document.getElementById('feedbackMessage').style.display = 'none';
+            document.getElementById('nextButton').style.display = 'none';
+        }
+
+        // 回答を選択
+        function selectAnswer(selectedChoice, button) {
+            const question = currentQuestions[currentQuestionIndex];
+            const buttons = document.querySelectorAll('.choice-button');
+            
+            // すべてのボタンを無効化
+            buttons.forEach(btn => {
+                btn.classList.add('disabled');
+                btn.onclick = null;
+            });
+            
+            // 正解・不正解の表示
+            const isCorrect = selectedChoice === question.correctAnswer;
+            if (isCorrect) {
+                button.classList.add('correct');
+                score++;
+                document.getElementById('currentScore').textContent = score;
+            } else {
+                button.classList.add('incorrect');
+                // 正解を表示
+                buttons.forEach(btn => {
+                    if (btn.textContent === question.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            // フィードバックメッセージを表示
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            feedbackMessage.className = 'feedback-message ' + (isCorrect ? 'correct' : 'incorrect');
+            feedbackMessage.textContent = isCorrect ? 
+                '正解です！素晴らしい！' : 
+                `不正解です。正解は「${question.correctAnswer}」でした。`;
+            feedbackMessage.style.display = 'block';
+            
+            // 記録を保存
+            answeredQuestions.push({
+                question: question.question,
+                selected: selectedChoice,
+                correct: question.correctAnswer,
+                isCorrect: isCorrect
+            });
+            
+            // 次へボタンを表示
+            document.getElementById('nextButton').style.display = 'block';
+        }
+
+        // 次の問題へ
+        function nextQuestion() {
+            currentQuestionIndex++;
+            
+            if (currentQuestionIndex < currentQuestions.length) {
+                displayQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        // 結果を表示
+        function showResult() {
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'block';
+            
+            const percentage = Math.round((score / currentQuestions.length) * 100);
+            
+            document.getElementById('finalScore').textContent = `${score} / ${currentQuestions.length}`;
+            document.getElementById('resultCategory').textContent = currentCategory.name;
+            document.getElementById('resultCorrect').textContent = `${score} / ${currentQuestions.length}`;
+            document.getElementById('resultAccuracy').textContent = `${percentage}%`;
+            
+            // 結果に応じたメッセージ
+            let message = '';
+            if (percentage === 100) {
+                message = '完璧です！全問正解おめでとうございます！';
+            } else if (percentage >= 80) {
+                message = '素晴らしい成績です！よく頑張りました！';
+            } else if (percentage >= 60) {
+                message = 'いい調子です！もう少しで上級者の仲間入りです！';
+            } else if (percentage >= 40) {
+                message = 'まずまずの成績です。復習してみましょう！';
+            } else {
+                message = '次はもっといい結果が出せるはずです。頑張って！';
+            }
+            
+            document.getElementById('resultMessage').textContent = message;
+        }
+
+        // もう一度挑戦
+        function retryQuiz() {
+            startQuiz(currentCategory);
+        }
+
+        // カテゴリ選択へ戻る
+        function backToCategories() {
+            document.getElementById('categorySection').style.display = 'block';
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+        }
+        
+        // アプリケーションの読み込みが完了したら初期化処理を実行
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+    </script>
+</body>
+</html>
